@@ -1,0 +1,63 @@
+using System.Collections;
+using System.Collections.Generic;
+using System.IO;
+using UnityEditor.PackageManager.UI;
+using UnityEditor;
+using UnityEngine;
+using UnityEditor.VersionControl;
+
+public class InventoryController : MonoBehaviour
+{
+    [Header("Connections:")]
+    [SerializeField] Inventory inventory;
+    [SerializeField] InventoryUI inventoryUI;
+
+    [Header("Data:")]
+    public List<InventoryUI> inventoryUIs;
+    [SerializeField] int size;
+    [SerializeField] ContainerType containerType;
+
+    [Header("Settings:")]
+    public string _path;
+    public static string path;//Where the scriptable object will be created
+    void Start()
+    {
+        if(_path != null)
+        {
+            path = _path;
+        }
+        if (inventory == null)
+        {
+            //creating new Inventory if no instance presented
+            inventory = ScriptableObject.CreateInstance<Inventory>();
+            inventory.Init(size);
+            AssetDatabase.CreateAsset(inventory, path);
+            AssetDatabase.SaveAssets();
+        }
+        switch(containerType){//required for leading logic
+            case ContainerType.chest:
+                inventoryUI = inventoryUIs[1];
+                break;
+            case ContainerType.inventory:
+                inventoryUI = inventoryUIs[0];
+                break;
+        }
+
+    }
+    public void ConnectInventory()
+    {
+        try
+        {
+            inventoryUI.ConnectI(this.inventory);
+        }
+        catch
+        {
+            Debug.LogWarning("No inventory");
+        }
+    }
+}
+public enum ContainerType
+{
+    chest,
+    inventory
+}
