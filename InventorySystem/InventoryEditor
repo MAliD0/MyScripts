@@ -1,0 +1,22 @@
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using UnityEditor;
+using UnityEditor.TerrainTools;
+using UnityEngine;
+[CustomEditor(typeof(Inventory))]
+public class InventoryEditor : Editor
+{
+    public Item item;//here you can attach item for debugging.
+    //This file is capable for inventory-logic test
+    public override void OnInspectorGUI()
+    {
+        Inventory inventory = (Inventory)target;
+        base.OnInspectorGUI();
+        if (GUILayout.Button("AddItem"))
+        {
+            inventory.Add(item, 1);
+            Debug.Log("ItemAdded");
+        }
+    }
+}
