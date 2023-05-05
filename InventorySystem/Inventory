@@ -1,0 +1,147 @@
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using Unity.VisualScripting;
+using UnityEngine;
+using static UnityEditor.Progress;
+
+[CreateAssetMenu(fileName = "Inventory", menuName = "InventorySystem")]
+public class Inventory : ScriptableObject
+{
+    public List<Slot> items = new List<Slot>();
+    public delegate void OnItemChanged();
+    public OnItemChanged onItemChanged;
+
+    public Item item;
+
+    public bool Add(Item item, int num)
+    {
+        int itemCount = num;
+        int i = 0;
+        while (itemCount > 0)
+        {
+            Debug.Log("iteration" + i + ":");
+
+            int numToAdd = Mathf.Min(item.stackSize, itemCount);
+
+            Debug.Log("Load number:" + numToAdd);
+            Slot slot = items.Find(stack => stack.item == item && stack.isFull == false);// searches for valid
+            if (slot == null)
+            {
+                slot = items.Find(stack => stack.isFull == false);
+                if (slot == null)
+                {
+                    Debug.Log("Exit");
+                    return false;
+                }
+                else
+                {
+                    slot.SetSlot(item, 0);
+                    slot.ChangeCount(numToAdd, 1);
+                }
+            }
+            else
+            {
+                Debug.Log("Found not null");
+                slot.ChangeCount(numToAdd, 1);
+            }
+
+            itemCount -= numToAdd;
+            i++;
+        }
+        onItemChanged?.Invoke();
+        return true;
+    }
+
+    public void Delete(Item item, int num)
+    {
+        int itemCount = num;
+        int i = 0;
+        while (itemCount > 0)
+        {
+            Debug.Log("iteration" + i + ":");
+            Slot slot = items.FindLast(delete => delete.item == item && delete.count > 0);
+            int loadNum = 0;
+
+            if (slot != null)
+            {
+                loadNum = Mathf.Min(slot.count, itemCount);
+                slot.ChangeCount(-loadNum, 'a');
+                if(slot.count ==0)
+                {
+                    items.Remove(slot);
+                }
+                onItemChanged?.Invoke();
+            }
+            else
+            {
+                return;
+            }
+            itemCount -= loadNum;
+        }
+    }
+
+    public void Init(int count)
+    {
+        for (int i = 0; i < count; i++)
+        {
+            Slot slot = new Slot(null);
+            items.Add(slot);
+        }
+    }
+}
+[Serializable]
+public class Slot
+{
+    public Item item;
+    public int count;
+    public bool isFull;
+    public Slot(Item _item, int _count)
+    {
+        count = _count;
+        item = _item;
+    }
+    public Slot(Slot slot)
+    {
+        if(slot == null)
+        {
+            count = 0;
+            item = null;
+            isFull = false;
+            return;
+        }
+        count = slot.count;
+        item = slot.item;
+        isFull = slot.isFull;
+    }
+    public void ClearSlot()
+    {
+        item = null;
+        isFull = false;
+        count = 0;
+
+    }
+    public void SetSlot(Item item, int count)
+    {
+        this.item = item;
+        this.count = count;
+    }
+    public void ChangeCount(int num, int type)
+    {
+
+        if (type == 1)//add this number
+        {
+            count += num;
+        }
+        else if (type == 2)//set to number
+        {
+            count = num;
+        }
+        else
+        {
+            count = num;
+        }
+        isFull = count >= item.stackSize;
+    }
+}
+    
